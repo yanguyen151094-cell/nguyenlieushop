@@ -1,20 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { uploadPublicImage } from '@/lib/imageUpload';
 import { saveSiteSetting, useSiteSetting } from '@/hooks/useSiteSetting';
-import {
-  DEFAULT_BANNER_SLIDES,
-  DEFAULT_SITE_CONTACT,
-  SETTING_KEYS,
-  type BannerSlide,
-  type SiteContact,
-} from '@/lib/siteContent';
+import { DEFAULT_BANNER_SLIDES, SETTING_KEYS, type BannerSlide } from '@/lib/siteContent';
 
 interface BannerSetting extends Record<string, unknown> {
   slides: BannerSlide[];
-}
-
-interface ContactSetting extends Record<string, unknown> {
-  contact: SiteContact;
 }
 
 interface Props {
@@ -23,10 +13,8 @@ interface Props {
 
 export default function AdminBannerEditor({ onSaved }: Props) {
   const banner = useSiteSetting<BannerSetting>(SETTING_KEYS.banner, { slides: DEFAULT_BANNER_SLIDES });
-  const contact = useSiteSetting<ContactSetting>(SETTING_KEYS.contact, { contact: DEFAULT_SITE_CONTACT });
 
   const [slides, setSlides] = useState<BannerSlide[]>(DEFAULT_BANNER_SLIDES);
-  const [info, setInfo] = useState<SiteContact>(DEFAULT_SITE_CONTACT);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
@@ -36,10 +24,6 @@ export default function AdminBannerEditor({ onSaved }: Props) {
   useEffect(() => {
     setSlides(banner.value.slides?.length ? banner.value.slides : DEFAULT_BANNER_SLIDES);
   }, [banner.value.slides]);
-
-  useEffect(() => {
-    setInfo({ ...DEFAULT_SITE_CONTACT, ...(contact.value.contact ?? {}) });
-  }, [contact.value.contact]);
 
   const patchSlide = (key: string, field: keyof BannerSlide, next: string) => {
     setSlides((prev) => prev.map((slide) => (slide.key === key ? { ...slide, [field]: next } : slide)));
@@ -97,8 +81,7 @@ export default function AdminBannerEditor({ onSaved }: Props) {
     setNote(null);
     try {
       await saveSiteSetting(SETTING_KEYS.banner, { slides });
-      await saveSiteSetting(SETTING_KEYS.contact, { contact: info });
-      await Promise.all([banner.refresh(), contact.refresh()]);
+      await banner.refresh();
       setNote({ ok: true, text: 'Đã cập nhật nội dung website.' });
       onSaved?.();
     } catch {
@@ -243,37 +226,6 @@ export default function AdminBannerEditor({ onSaved }: Props) {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section className="rounded-lg border border-background-200 bg-background-50 p-4 md:p-5">
-        <h2 className="font-heading text-base font-extrabold text-foreground-950">Thông tin liên hệ</h2>
-        <p className="mt-1 text-xs text-foreground-600">Thông tin này dùng cho chân trang và phần hỗ trợ khách hàng.</p>
-        <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <input
-            value={info.hotline}
-            onChange={(e) => setInfo({ ...info, hotline: e.target.value })}
-            placeholder="Hotline"
-            className="h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
-          />
-          <input
-            value={info.email}
-            onChange={(e) => setInfo({ ...info, email: e.target.value })}
-            placeholder="Email hỗ trợ"
-            className="h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
-          />
-          <input
-            value={info.address}
-            onChange={(e) => setInfo({ ...info, address: e.target.value })}
-            placeholder="Địa chỉ"
-            className="sm:col-span-2 h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
-          />
-          <input
-            value={info.working_hours}
-            onChange={(e) => setInfo({ ...info, working_hours: e.target.value })}
-            placeholder="Giờ làm việc / ghi chú"
-            className="sm:col-span-2 h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
-          />
         </div>
       </section>
 

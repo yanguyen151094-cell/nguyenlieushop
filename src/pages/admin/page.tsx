@@ -10,6 +10,7 @@ import DepositApprovalPanel from './components/DepositApprovalPanel';
 import AdminBankAccounts from './components/AdminBankAccounts';
 import AdminBannerEditor from './components/AdminBannerEditor';
 import AdminLiveShowcaseEditor from './components/AdminLiveShowcaseEditor';
+import AdminBrandFilterEditor from './components/AdminBrandFilterEditor';
 import AdminFeePanel from './components/AdminFeePanel';
 
 interface PersonMeta {
@@ -331,6 +332,7 @@ export default function AdminPage() {
         {tab === 'content' && (
           <div className="space-y-4">
             <AdminBannerEditor />
+            <AdminBrandFilterEditor />
             <AdminLiveShowcaseEditor />
           </div>
         )}

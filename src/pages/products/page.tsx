@@ -4,7 +4,15 @@ import { supabase } from '@/lib/supabaseClient';
 import type { Product } from '@/types/db';
 import { CATEGORIES } from '@/lib/format';
 import { BRAND_FILTER_KEYS, brandByKey, brandKeyOf } from '@/lib/brandTheme';
+import { DEFAULT_BRAND_LABELS, SETTING_KEYS } from '@/lib/siteContent';
+import { useSiteSetting } from '@/hooks/useSiteSetting';
 import ProductCard from '@/components/product/ProductCard';
+
+interface BrandSetting extends Record<string, unknown> {
+  title: string;
+  labels: Record<string, string>;
+  hidden: string[];
+}
 
 type SortKey = 'sold' | 'price-asc' | 'price-desc' | 'new';
 
@@ -21,6 +29,13 @@ export default function ProductsPage() {
   const keyword = searchParams.get('q') ?? '';
   const brand = searchParams.get('brand') ?? '';
   const source = searchParams.get('source') ?? '';
+
+  const { value: brandSetting } = useSiteSetting<BrandSetting>(SETTING_KEYS.brandLabels, {
+    title: DEFAULT_BRAND_LABELS.title,
+    labels: DEFAULT_BRAND_LABELS.labels,
+    hidden: DEFAULT_BRAND_LABELS.hidden,
+  });
+  const brandTitle = brandSetting.title?.trim() || DEFAULT_BRAND_LABELS.title;
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,12 +116,18 @@ export default function ProductsPage() {
       const key = brandKeyOf(product);
       counts.set(key, (counts.get(key) ?? 0) + 1);
     });
-    return BRAND_FILTER_KEYS.filter((key) => counts.has(key)).map((key) => ({
-      key,
-      count: counts.get(key) ?? 0,
-      theme: brandByKey(key),
-    }));
-  }, [products]);
+    const hidden = brandSetting.hidden ?? [];
+    const labels = brandSetting.labels ?? {};
+    return BRAND_FILTER_KEYS.filter((key) => counts.has(key) && !hidden.includes(key)).map((key) => {
+      const theme = brandByKey(key);
+      const custom = labels[key]?.trim();
+      return {
+        key,
+        count: counts.get(key) ?? 0,
+        theme: custom ? { ...theme, label: custom } : theme,
+      };
+    });
+  }, [products, brandSetting]);
 
   const updateParam = (patch: Record<string, string>) => {
     const next = new URLSearchParams(searchParams);
@@ -240,7 +261,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between gap-2 mb-2.5">
             <p className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.12em] text-foreground-500">
               <i className="ri-filter-3-line text-sm leading-none text-primary-600"></i>
-              Lọc theo thương hiệu
+              {brandTitle}
             </p>
             {brand && (
               <button

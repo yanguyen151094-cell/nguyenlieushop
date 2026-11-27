@@ -1,11 +1,5 @@
 import { Link } from 'react-router-dom';
 import BrandMark from '@/components/brand/BrandMark';
-import { useSiteSetting } from '@/hooks/useSiteSetting';
-import { DEFAULT_SITE_CONTACT, SETTING_KEYS, type SiteContact } from '@/lib/siteContent';
-
-interface ContactSetting extends Record<string, unknown> {
-  contact: SiteContact;
-}
 
 const FOOTER_LINKS = [
   {
@@ -22,6 +16,7 @@ const FOOTER_LINKS = [
     title: 'Hỗ trợ',
     links: [
       { label: 'Sản phẩm', to: '/san-pham' },
+      { label: 'Nạp tiền', to: '/nap-tien' },
       { label: 'Đăng nhập', to: '/dang-nhap' },
       { label: 'Đăng ký', to: '/dang-ky' },
     ],
@@ -29,9 +24,6 @@ const FOOTER_LINKS = [
 ];
 
 export default function Footer() {
-  const { value } = useSiteSetting<ContactSetting>(SETTING_KEYS.contact, { contact: DEFAULT_SITE_CONTACT });
-  const contact = { ...DEFAULT_SITE_CONTACT, ...(value.contact ?? {}) };
-
   return (
     <footer className="w-full bg-primary-950 text-background-100">
       <div className="w-full px-4 md:px-8 py-12 md:py-16">
@@ -47,30 +39,25 @@ export default function Footer() {
               YAMATO SHOP là sàn giao dịch tài khoản số cho người Việt: Facebook, TikTok, Gmail, Telegram và công cụ AI.
               Giao dịch tự động, bảo hành minh bạch, đối tác được xác minh ẩn danh.
             </p>
-            <div className="flex items-center gap-3 mt-5">
-              {['ri-facebook-circle-line', 'ri-telegram-line', 'ri-message-3-line'].map((icon) => (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {[
+                { icon: 'ri-facebook-circle-line', label: 'Facebook' },
+                { icon: 'ri-telegram-line', label: 'Telegram' },
+                { icon: 'ri-message-3-line', label: 'Chat hỗ trợ' },
+              ].map((item) => (
                 <span
-                  key={icon}
+                  key={item.icon}
+                  title={item.label}
                   className="w-9 h-9 flex items-center justify-center rounded-md bg-primary-900 text-background-200"
                 >
-                  <i className={`${icon} text-base leading-none`}></i>
+                  <i className={`${item.icon} text-base leading-none`}></i>
                 </span>
               ))}
             </div>
-            <div className="mt-5 space-y-1.5">
-              <p className="text-xs text-background-300 flex items-center gap-1.5">
-                <i className="ri-phone-line text-sm leading-none text-accent-400"></i>
-                {contact.hotline}
-              </p>
-              <p className="text-xs text-background-300 flex items-center gap-1.5">
-                <i className="ri-mail-line text-sm leading-none text-accent-400"></i>
-                {contact.email}
-              </p>
-              <p className="text-xs text-background-300 flex items-start gap-1.5">
-                <i className="ri-map-pin-line text-sm leading-none text-accent-400 mt-0.5"></i>
-                {contact.address}
-              </p>
-            </div>
+            <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-primary-900 px-3 py-1.5 text-[11px] font-semibold text-background-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-500"></span>
+              Hỗ trợ 24/7 qua chat · Bảo hành 1 đổi 1
+            </p>
           </div>
 
           {FOOTER_LINKS.map((group) => (
@@ -98,9 +85,7 @@ export default function Footer() {
           <p className="text-xs text-background-400">
             © {new Date().getFullYear()} YAMATO SHOP. Giao dịch số minh bạch và an toàn.
           </p>
-          <p className="text-xs text-background-400">
-            Hỗ trợ 24/7 · Bảo hành 1 đổi 1 · Thanh toán nội bộ bằng ví
-          </p>
+          <p className="text-xs text-background-400">Bảo hành 1 đổi 1 · Thanh toán nội bộ bằng ví</p>
         </div>
       </div>
     </footer>

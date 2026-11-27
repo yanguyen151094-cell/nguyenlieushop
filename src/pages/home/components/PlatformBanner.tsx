@@ -1,10 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSiteSetting } from '@/hooks/useSiteSetting';
-import { DEFAULT_BANNER_SLIDES, SETTING_KEYS, type BannerSlide } from '@/lib/siteContent';
+import { DEFAULT_BANNER_SLIDES, DEFAULT_BRAND_LABELS, SETTING_KEYS, type BannerSlide } from '@/lib/siteContent';
 
 interface BannerSetting extends Record<string, unknown> {
   slides: BannerSlide[];
+}
+
+interface BrandSetting extends Record<string, unknown> {
+  labels: Record<string, string>;
+  hidden: string[];
+}
+
+function brandKeyOfSlide(slide: BannerSlide): string {
+  const match = slide.to.match(/[?&](?:brand|category)=([^&]+)/);
+  if (!match) return '';
+  const raw = decodeURIComponent(match[1]);
+  return raw === 'ai-tools' ? 'ai' : raw;
 }
 
 export default function PlatformBanner() {
@@ -12,6 +24,15 @@ export default function PlatformBanner() {
     slides: DEFAULT_BANNER_SLIDES,
   });
   const slides = value.slides?.length ? value.slides : DEFAULT_BANNER_SLIDES;
+  const { value: brandSetting } = useSiteSetting<BrandSetting>(SETTING_KEYS.brandLabels, {
+    labels: DEFAULT_BRAND_LABELS.labels,
+    hidden: DEFAULT_BRAND_LABELS.hidden,
+  });
+  const brandLabels = brandSetting.labels ?? {};
+  const platformLabel = (slide: BannerSlide) => {
+    const key = brandKeyOfSlide(slide);
+    return (key && brandLabels[key]?.trim()) || slide.platform;
+  };
 
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -42,7 +63,7 @@ export default function PlatformBanner() {
   }, [index, slides.length]);
 
   return (
-    <section className="w-full px-4 md:px-8 pt-8 md:pt-10 pb-8 md:pb-10 bg-background-50">
+    <section className="w-full px-4 md:px-8 pt-8 md:pt-10 pb-8 md:pb-10 bg-gradient-to-b from-background-100 via-background-100 to-background-50 border-b border-background-200/60">
       <div className="w-full mb-4 md:mb-5">
         <h1 className="sr-only">YAMATO SHOP - Mua tài khoản số chất lượng, giao ngay trong 30 giây</h1>
         <div className="w-full max-w-2xl mx-auto">
@@ -174,7 +195,7 @@ export default function PlatformBanner() {
             }`}
           >
             <i className={`${slide.icon} text-sm leading-none`}></i>
-            {slide.platform}
+            {platformLabel(slide)}
           </button>
         ))}
       </div>

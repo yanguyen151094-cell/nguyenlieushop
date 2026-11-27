@@ -27,7 +27,17 @@ export interface DepositBank {
   account_holder: string;
   branch: string;
   note: string;
+  /** Mã nội dung chuyển khoản riêng của từng tài khoản, giúp đối chiếu khi duyệt lệnh nạp. */
+  content_prefix: string;
+  /** Ảnh mã QR chuyển khoản nhanh của tài khoản này. */
+  qr_image: string;
   is_active: boolean;
+}
+
+export interface BrandLabelConfig {
+  title: string;
+  labels: Record<string, string>;
+  hidden: string[];
 }
 
 export interface SiteContact {
@@ -48,6 +58,7 @@ export const SETTING_KEYS = {
   contact: 'site_contact',
   fee: 'display_fee',
   liveShowcase: 'live_showcase',
+  brandLabels: 'brand_labels',
 } as const;
 
 export const DEFAULT_BANNER_SLIDES: BannerSlide[] = [
@@ -126,6 +137,8 @@ export const DEFAULT_DEPOSIT_BANKS: DepositBank[] = [
     account_holder: 'YAMATO SHOP',
     branch: 'Chi nhánh Hà Nội',
     note: 'Nội dung chuyển khoản ghi đúng mã nạp để được duyệt nhanh.',
+    content_prefix: 'VCB',
+    qr_image: '',
     is_active: true,
   },
   {
@@ -135,9 +148,23 @@ export const DEFAULT_DEPOSIT_BANKS: DepositBank[] = [
     account_holder: 'YAMATO SHOP',
     branch: 'Chi nhánh Sài Gòn',
     note: 'Hỗ trợ nạp 24/7, duyệt trong 5 - 15 phút.',
+    content_prefix: 'MBB',
+    qr_image: '',
     is_active: true,
   },
 ];
+
+export const DEFAULT_BRAND_LABELS: BrandLabelConfig = {
+  title: 'Lọc theo thương hiệu',
+  labels: {
+    tiktok: 'TikTok',
+    facebook: 'Facebook',
+    gmail: 'Gmail',
+    telegram: 'Telegram',
+    ai: 'AI Tools',
+  },
+  hidden: [],
+};
 
 export const DEFAULT_SITE_CONTACT: SiteContact = {
   hotline: '0900 123 456',

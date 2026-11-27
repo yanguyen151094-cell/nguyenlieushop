@@ -5,11 +5,11 @@
 @tailwind utilities;
 
 :root {
-  --background-50: 0.995 0.003 85;
-  --background-100: 0.978 0.005 85;
-  --background-200: 0.950 0.008 82;
-  --background-300: 0.905 0.011 80;
-  --background-400: 0.815 0.014 78;
+  --background-50: 0.991 0.008 88;
+  --background-100: 0.968 0.016 86;
+  --background-200: 0.936 0.021 84;
+  --background-300: 0.892 0.025 82;
+  --background-400: 0.802 0.028 80;
   --background-500: 0.705 0.016 76;
   --background-600: 0.605 0.017 76;
   --background-700: 0.505 0.017 76;
@@ -79,7 +79,7 @@ html {
 
 body {
   font-family: var(--font-body);
-  background-color: oklch(var(--background-50));
+  background-color: oklch(var(--background-100));
   color: oklch(var(--foreground-950));
   -webkit-font-smoothing: antialiased;
 }

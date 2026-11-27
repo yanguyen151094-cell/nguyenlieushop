@@ -119,6 +119,10 @@ export default function DepositApprovalPanel({ onChanged }: { onChanged?: () => 
                     Mã nạp <span className="font-mono font-semibold">{item.transfer_code}</span>
                     {people[item.user_id]?.email ? ` · ${people[item.user_id].email}` : ''}
                   </p>
+                  <p className="mt-0.5 inline-flex items-center gap-1 text-[10px] font-semibold text-secondary-900">
+                    <i className="ri-bank-card-line text-[11px] leading-none"></i>
+                    Nhận vào: {item.method && item.method !== 'bank' ? item.method : 'Chưa xác định tài khoản'}
+                  </p>
                   <p className="text-[10px] text-foreground-400">{formatDateTime(item.created_at)}</p>
                 </div>
                 <div className="flex items-center gap-1.5">

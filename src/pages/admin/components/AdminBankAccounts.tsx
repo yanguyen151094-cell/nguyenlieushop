@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_DEPOSIT_BANKS, SETTING_KEYS, type DepositBank } from '@/lib/siteContent';
 import { saveSiteSetting, useSiteSetting } from '@/hooks/useSiteSetting';
+import { uploadPublicImage } from '@/lib/imageUpload';
 
 interface BankSetting extends Record<string, unknown> {
   banks: DepositBank[];
@@ -13,6 +14,8 @@ const emptyBank = (): DepositBank => ({
   account_holder: '',
   branch: '',
   note: '',
+  content_prefix: '',
+  qr_image: '',
   is_active: true,
 });
 
@@ -22,14 +25,40 @@ export default function AdminBankAccounts() {
   });
   const [banks, setBanks] = useState<DepositBank[]>([]);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState<string | null>(null);
   const [note, setNote] = useState<{ ok: boolean; text: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+  const targetRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setBanks(value.banks ?? DEFAULT_DEPOSIT_BANKS);
+    setBanks((value.banks ?? DEFAULT_DEPOSIT_BANKS).map((bank) => ({ ...emptyBank(), ...bank })));
   }, [value.banks]);
 
   const patch = (id: string, field: keyof DepositBank, next: string | boolean) => {
     setBanks((prev) => prev.map((bank) => (bank.id === id ? { ...bank, [field]: next } : bank)));
+  };
+
+  const pickQr = (id: string) => {
+    targetRef.current = id;
+    fileRef.current?.click();
+  };
+
+  const uploadQr = async (file: File) => {
+    const id = targetRef.current;
+    if (!id) return;
+    setUploading(id);
+    setNote(null);
+    try {
+      const url = await uploadPublicImage(file, 'banners');
+      patch(id, 'qr_image', url);
+      setNote({ ok: true, text: 'Đã tải ảnh QR. Bấm “Lưu thay đổi” để áp dụng.' });
+    } catch (err) {
+      setNote({ ok: false, text: err instanceof Error ? err.message : 'Không tải được ảnh QR.' });
+    } finally {
+      setUploading(null);
+      targetRef.current = null;
+      if (fileRef.current) fileRef.current.value = '';
+    }
   };
 
   const save = async () => {
@@ -51,6 +80,8 @@ export default function AdminBankAccounts() {
           account_holder: bank.account_holder.trim().toUpperCase(),
           branch: bank.branch.trim(),
           note: bank.note.trim(),
+          content_prefix: bank.content_prefix.trim().toUpperCase(),
+          qr_image: bank.qr_image.trim(),
         })),
       });
       await refresh();
@@ -68,7 +99,8 @@ export default function AdminBankAccounts() {
         <div>
           <h2 className="font-heading text-base font-extrabold text-foreground-950">Tài khoản nhận tiền nạp</h2>
           <p className="mt-1 text-xs text-foreground-600">
-            Đây là các tài khoản hiển thị cho người dùng khi nạp tiền. Anh có thể thêm, sửa hoặc thay thế bất cứ lúc nào.
+            Mỗi tài khoản có mã nội dung riêng và mã QR riêng để người nạp dễ nhận biết, anh cũng dễ đối chiếu khi duyệt
+            lệnh.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -95,6 +127,17 @@ export default function AdminBankAccounts() {
           </button>
         </div>
       </div>
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) uploadQr(file);
+        }}
+      />
 
       {loading ? (
         <div className="mt-3 h-24 rounded-md bg-background-100 animate-pulse"></div>
@@ -154,13 +197,71 @@ export default function AdminBankAccounts() {
                   placeholder="Chi nhánh (không bắt buộc)"
                   className="h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
                 />
+                <input
+                  value={bank.content_prefix}
+                  onChange={(e) => patch(bank.id, 'content_prefix', e.target.value)}
+                  placeholder="Mã nội dung riêng (VD: VCB)"
+                  className="h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs font-semibold uppercase focus:outline-none focus:border-primary-400"
+                />
+                <input
+                  value={bank.note}
+                  onChange={(e) => patch(bank.id, 'note', e.target.value)}
+                  placeholder="Ghi chú cho người nạp (không bắt buộc)"
+                  className="h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
+                />
               </div>
-              <input
-                value={bank.note}
-                onChange={(e) => patch(bank.id, 'note', e.target.value)}
-                placeholder="Ghi chú hiển thị cho người nạp (không bắt buộc)"
-                className="mt-2 w-full h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
-              />
+
+              <div className="mt-2 rounded-md border border-background-200 bg-background-50 p-2.5">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-foreground-500">
+                    Mã QR chuyển khoản
+                  </p>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => pickQr(bank.id)}
+                      disabled={uploading === bank.id}
+                      className="h-7 px-2 inline-flex items-center gap-1 rounded-md border border-background-300 text-[11px] font-semibold text-foreground-800 hover:bg-background-100 disabled:opacity-60 whitespace-nowrap cursor-pointer"
+                    >
+                      {uploading === bank.id ? (
+                        <i className="ri-loader-4-line animate-spin text-xs leading-none"></i>
+                      ) : (
+                        <i className="ri-upload-2-line text-xs leading-none"></i>
+                      )}
+                      Tải ảnh QR
+                    </button>
+                    {bank.qr_image && (
+                      <button
+                        type="button"
+                        onClick={() => patch(bank.id, 'qr_image', '')}
+                        className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-[11px] font-semibold text-primary-700 hover:bg-primary-50 whitespace-nowrap cursor-pointer"
+                      >
+                        <i className="ri-delete-bin-line text-xs leading-none"></i>
+                        Xoá
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="mt-2 flex items-start gap-2.5">
+                  <div className="w-20 h-20 shrink-0 rounded-md border border-background-200 bg-background-100 overflow-hidden flex items-center justify-center">
+                    {bank.qr_image ? (
+                      <img
+                        src={bank.qr_image}
+                        alt={`Mã QR ${bank.bank_name || 'tài khoản'}`}
+                        className="w-full h-full object-contain"
+                      />
+                    ) : (
+                      <i className="ri-qr-code-line text-2xl text-foreground-400"></i>
+                    )}
+                  </div>
+                  <input
+                    value={bank.qr_image}
+                    onChange={(e) => patch(bank.id, 'qr_image', e.target.value)}
+                    placeholder="Hoặc dán liên kết ảnh QR"
+                    className="flex-1 min-w-0 h-9 px-2.5 rounded-md border border-background-300 bg-background-50 text-xs focus:outline-none focus:border-primary-400"
+                  />
+                </div>
+              </div>
             </div>
           ))}
           {banks.length === 0 && (

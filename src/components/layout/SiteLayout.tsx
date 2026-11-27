@@ -5,7 +5,7 @@ import ChatWidget from '@/components/feature/ChatWidget';
 
 export default function SiteLayout() {
   return (
-    <div className="min-h-screen flex flex-col bg-background-50">
+    <div className="min-h-screen flex flex-col bg-background-100">
       <Header />
       <main className="flex-1 w-full">
         <Outlet />

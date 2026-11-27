@@ -55,6 +55,10 @@ Ba nhóm người dùng:
 - [x] Trang quản trị có nút đăng xuất riêng kèm tên quản trị viên đang đăng nhập
 - [x] Đăng ký làm đối tác: tự gửi yêu cầu mở gian hàng vào phòng chat với admin và mở khung chat ngay sau khi đăng ký
 - [x] Trang sản phẩm hiển thị đủ sản phẩm mọi đối tác, cập nhật realtime khi có sản phẩm mới, có lọc theo nguồn hàng (đối tác / sàn)
+- [x] Mỗi tài khoản nhận nạp có mã QR chuyển khoản riêng và mã nội dung riêng; mã nạp sinh ra mang tiền tố của tài khoản nhận để dễ đối chiếu khi duyệt
+- [x] Admin chỉnh được từ ngữ dải phân loại thương hiệu (đổi tên, ẩn/hiện từng thương hiệu, đổi tiêu đề dải lọc) — áp dụng cho dải lọc trang sản phẩm và dải nền tảng dưới banner
+- [x] Nền website chuyển sang tông kem ấm dịu mắt, chữ tương phản cao dễ đọc
+- [x] Bỏ khối thông tin liên hệ (hotline, email, địa chỉ) khỏi chân trang và trang quản trị
 
 ## 4. Data Model Design
 ### Table: profiles
@@ -103,7 +107,10 @@ user_id (PK), vendor_id (đối tác được admin thêm vào phòng), created_
 id, vendor_id, bank_name, bank_number, bank_holder, is_default, created_at
 
 ### Table: site_settings
-key (PK), value (jsonb), updated_at — nội dung website do admin chỉnh: `banner_slides`, `live_showcase`, `deposit_banks`, `site_contact`, `display_fee`. Ai cũng đọc được, chỉ admin ghi.
+key (PK), value (jsonb), updated_at — nội dung website do admin chỉnh: `banner_slides`, `live_showcase`, `deposit_banks` (kèm `content_prefix`, `qr_image` từng tài khoản), `brand_labels` (tiêu đề + từ ngữ + thương hiệu ẩn), `display_fee`. Ai cũng đọc được, chỉ admin ghi.
+
+### Function: create_deposit_v2
+Tạo lệnh nạp cho người dùng đang đăng nhập, sinh `transfer_code` = tiền tố nội dung của tài khoản nhận + 6 ký tự ngẫu nhiên, lưu `method` = "Tên ngân hàng · Số tài khoản" để admin đối chiếu khi duyệt.
 
 ### Table: vendor_notifications
 id, vendor_id, type (fee/notice/system), title, content, amount, period, is_read, created_at — thông báo phí và thông báo từ admin tới từng đối tác.
@@ -138,3 +145,7 @@ Admin-only, thu phí trưng bày theo kỳ `YYYY-MM`, trừ số dư từng đ�
 ### Phase 5: Quản trị nội dung và vận hành tài chính
 - Goal: Admin tự vận hành toàn bộ website mà không cần sửa code
 - Deliverable: Trang nạp tiền theo tài khoản admin cài, duyệt nạp/rút, chỉnh banner và liên hệ, phí trưng bày hàng tháng có thông báo, bộ lọc thương hiệu, tối ưu triển khai Vercel
+
+### Phase 6: Nhận diện nạp tiền và tinh chỉnh giao diện
+- Goal: Người nạp tiền nhận diện đúng tài khoản nhận, admin duyệt nhanh; giao diện dịu mắt hơn
+- Deliverable: Mã QR + mã nội dung riêng từng tài khoản nhận nạp, bảng duyệt hiển thị tài khoản nhận, admin chỉnh danh sách phân loại thương hiệu, nền kem ấm, bỏ khối thông tin liên hệ

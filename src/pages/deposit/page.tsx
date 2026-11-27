@@ -81,7 +81,11 @@ export default function DepositPage() {
     setBusy(true);
     setNote(null);
     try {
-      const { data, error } = await supabase.rpc('create_deposit', { p_amount: value });
+      const { data, error } = await supabase.rpc('create_deposit_v2', {
+        p_amount: value,
+        p_prefix: bank?.content_prefix || 'NAP',
+        p_method: bank ? `${bank.bank_name} · ${bank.account_number}` : 'bank',
+      });
       if (error) throw error;
       setCreated(data as unknown as Deposit);
       setNote({ ok: true, text: 'Đã tạo lệnh nạp. Hãy chuyển khoản đúng nội dung bên dưới.' });
@@ -235,9 +239,49 @@ export default function DepositPage() {
                         {item.account_holder}
                         {item.branch ? ` · ${item.branch}` : ''}
                       </p>
+                      {item.content_prefix && (
+                        <p className="mt-1 inline-flex items-center gap-1 h-5 px-1.5 rounded-full bg-secondary-100 text-[9px] font-bold text-secondary-900 whitespace-nowrap">
+                          <i className="ri-price-tag-3-line text-[10px] leading-none"></i>
+                          Nội dung: {item.content_prefix}
+                        </p>
+                      )}
                     </button>
                   );
                 })}
+              </div>
+            )}
+
+            {bank && (
+              <div className="mt-2.5 flex items-start gap-3 rounded-md border border-background-200 bg-background-50 p-2.5">
+                <div className="w-24 h-24 shrink-0 rounded-md border border-background-200 bg-background-50 overflow-hidden flex items-center justify-center">
+                  {bank.qr_image ? (
+                    <img
+                      src={bank.qr_image}
+                      alt={`Mã QR ${bank.bank_name}`}
+                      title={`Mã QR chuyển khoản ${bank.bank_name} - YAMATO SHOP`}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <span className="px-2 text-center text-[10px] leading-tight text-foreground-400">
+                      Quản trị viên chưa cập nhật mã QR
+                    </span>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-foreground-950">Quét mã để chuyển khoản nhanh</p>
+                  <p className="mt-0.5 text-[11px] text-foreground-700">
+                    {bank.bank_name} · <span className="font-mono">{bank.account_number}</span>
+                  </p>
+                  {bank.content_prefix && (
+                    <p className="mt-1 text-[10px] text-foreground-500">
+                      Mã nội dung riêng:{' '}
+                      <span className="font-mono font-bold text-foreground-800">{bank.content_prefix}</span>
+                    </p>
+                  )}
+                  {bank.note && (
+                    <p className="mt-0.5 text-[10px] leading-relaxed text-foreground-500">{bank.note}</p>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -276,6 +320,28 @@ export default function DepositPage() {
                 </span>
                 <p className="text-xs font-bold text-accent-900">Chuyển khoản theo thông tin sau</p>
               </div>
+              <div className="mt-3 flex items-start gap-3 rounded-md border border-accent-200 bg-background-50 p-2.5">
+                <div className="w-28 h-28 shrink-0 rounded-md border border-accent-200 bg-background-50 overflow-hidden flex items-center justify-center">
+                  {bank.qr_image ? (
+                    <img
+                      src={bank.qr_image}
+                      alt={`Mã QR ${bank.bank_name}`}
+                      title={`Mã QR chuyển khoản ${bank.bank_name} - YAMATO SHOP`}
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <i className="ri-qr-code-line text-3xl text-accent-400"></i>
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold text-accent-950">Mở app ngân hàng và quét mã</p>
+                  <p className="mt-0.5 text-[10px] leading-relaxed text-accent-800">
+                    Mã QR của tài khoản <span className="font-semibold">{bank.bank_name}</span>. Nhớ ghi đúng nội dung{' '}
+                    <span className="font-mono font-bold">{created.transfer_code}</span> khi chuyển khoản.
+                  </p>
+                </div>
+              </div>
+
               <dl className="mt-3 space-y-1.5">
                 {[
                   { label: 'Ngân hàng', value: bank.bank_name },
